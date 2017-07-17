@@ -6,3 +6,6 @@ __pycache__/
 
 # JetBrains IDEs
 *.idea
+
+# Scrapy configuration files
+*.cfg
