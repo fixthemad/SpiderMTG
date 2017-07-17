@@ -1,0 +1,8 @@
+# Python intermediate files
+# Byte Compiled/ optimized files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# JetBrains IDEs
+*.idea
