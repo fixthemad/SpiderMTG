@@ -4,9 +4,22 @@ from SpiderMTG.items import Auction
 
 class AuctionSpider(scrapy.Spider):
     name = "auctions"
+    base_url = 'https://www.ligamagic.com.br'
     start_urls = [
         'https://www.ligamagic.com.br/?view=leilao/listar&txt_user=PortoLivre',
     ]
+
+    def _find_number_of_pages(self, response):
+        last_page_href = response.xpath('//table[@cellpadding="1"]')[0]\
+            .xpath('.//td[@width="16"]/a/@href').extract_first()
+
+        n_pages = last_page_href.split("=")[-1]
+
+        l = len(str(n_pages))
+
+        next_page_href = last_page_href[:-len(str(n_pages))]
+
+        return next_page_href, n_pages
 
     def parse_auction(self, response):
         table = \
@@ -50,7 +63,10 @@ class AuctionSpider(scrapy.Spider):
 
         return auction
 
-    def parse(self, response):
+    def parse_page(self, response):
+
+        # @TODO: tr @id contains leilaoLinha
+
         self.log("Accessing: " + response.url)
         # Get all current auctions
         self.log("Getting Titles")
@@ -67,7 +83,22 @@ class AuctionSpider(scrapy.Spider):
             a['price'] = pb.xpath('.//p[@class="lj b"]/text()').extract_first()
             a['bids'] = pb.xpath('.//a[@class="medium"]/i/text()').extract_first()
             a['time_left'] = tl.xpath('.//text()').extract_first()
-            request = scrapy.Request("https://www.ligamagic.com.br" + a['href'], callback=self.parse_auction,
-                                     meta={'auction': a})
+            request = scrapy.Request(
+                self.base_url + a['href'],
+                callback=self.parse_auction,
+                meta={'auction': a}
+            )
             request.meta['auction'] = a
             yield request
+
+    def parse(self, response):
+        nex_page_href, n_pages = self._find_number_of_pages(response)
+
+        for i in range(1, 5):
+            link = self.base_url + nex_page_href + str(i)
+
+            yield scrapy.Request(
+                url=link,
+                callback=self.parse_page,
+            )
+
