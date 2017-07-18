@@ -3,9 +3,3 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
-# JetBrains IDEs
-*.idea
-
-# Scrapy configuration files
-*.cfg
