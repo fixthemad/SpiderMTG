@@ -23,9 +23,12 @@ class AuctionSpider(scrapy.Spider):
 
     def parse_auction(self, response):
         table = response.xpath(
-            '//div[contains(@class,"Desktop")]//table[@class="tabela-interna sem-borda"]//tbody/tr/td')
+            '//div[contains(@class,"Desktop")]'
+            '//table[@class="tabela-interna sem-borda"]'
+            '//tbody/'
+            'tr/'
+            'td')
         length = len(table)
-        self.log("Length: " + str(length))
 
         auction = response.meta['auction']
 
@@ -33,7 +36,6 @@ class AuctionSpider(scrapy.Spider):
             pass
             # The card is a product
         else:
-            # self.log(table[0].extract())
             n = length % 6
             quantity = table[0].xpath('.//p/b/text()').extract()
             card_pt = table[1].xpath('.//p/a/b/text()').extract()
@@ -81,8 +83,13 @@ class AuctionSpider(scrapy.Spider):
             a['href'] = title_and_href.xpath('.//@href').extract_first()[1:]
             a['price'] = auction.xpath('.//p[@class="lj b"]/text()').extract_first()
             a['bids'] = auction.xpath('.//a[@class="medium"]/i/text()').extract_first()
-            a['time_left'] = auction.xpath(
-                './/td[@class="txt-dir"]/a[@class="medium"]/text()').extract_first()
+            time_left = auction.xpath('.//td[@class="txt-dir"]/a[@class="medium"]')
+            # @TODO: See if this is necessary
+            t = time_left.xpath('.//text()').extract_first()
+            if t is None:
+                t = time_left.xpath('.//font/text()').extract_first()
+
+            a['time_left'] = t
             request = scrapy.Request(
                 self.base_url + a['href'],
                 callback=self.parse_auction,
@@ -94,7 +101,7 @@ class AuctionSpider(scrapy.Spider):
     def parse(self, response):
         nex_page_href, n_pages = self._find_number_of_pages(response)
 
-        for i in range(1, n_pages):
+        for i in range(1, 2):
             link = self.base_url + nex_page_href + str(i)
 
             yield scrapy.Request(
