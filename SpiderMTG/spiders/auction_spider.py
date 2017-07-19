@@ -19,11 +19,11 @@ class AuctionSpider(scrapy.Spider):
 
         next_page_href = last_page_href[:-len(str(n_pages))]
 
-        return next_page_href, n_pages
+        return next_page_href, int(n_pages)
 
     def parse_auction(self, response):
-        table = \
-            response.xpath('//div[contains(@class,"Desktop")]//table[@class="tabela-interna sem-borda"]//tbody/tr/td')
+        table = response.xpath(
+            '//div[contains(@class,"Desktop")]//table[@class="tabela-interna sem-borda"]//tbody/tr/td')
         length = len(table)
         self.log("Length: " + str(length))
 
@@ -64,25 +64,25 @@ class AuctionSpider(scrapy.Spider):
         return auction
 
     def parse_page(self, response):
+        tables = response.xpath('//div[@class="boxshadow conteudo box-interna"]')
 
-        # @TODO: tr @id contains leilaoLinha
+        if len(tables) == 3:
+            # Ignore discount auctions
+            auctions = tables[2].xpath(
+                './/table[contains(@class,"Desktop")]/tbody/tr[contains(@id,"leilao")]')
+        else:
+            auctions = tables[1].xpath(
+                './/table[contains(@class,"Desktop")]/tbody/tr[contains(@id,"leilao")]')
 
-        self.log("Accessing: " + response.url)
-        # Get all current auctions
-        self.log("Getting Titles")
-        title_and_href = response.xpath('//table[contains(@class,"Desktop")]//a[@class="big"]')
-        self.log("Getting Prices")
-        prices_and_bids = response.xpath('//td[@class="double txt-dir"]')
-        self.log("Getting Time Left")
-        time_left = response.xpath('//td[@class="txt-dir"]/a[@class="medium"]')
-
-        for th, pb, tl in zip(title_and_href, prices_and_bids, time_left):
+        for auction in auctions:
             a = Auction()
-            a['title'] = th.xpath('.//text()').extract_first()
-            a['href'] = th.xpath('.//@href').extract_first()[1:]
-            a['price'] = pb.xpath('.//p[@class="lj b"]/text()').extract_first()
-            a['bids'] = pb.xpath('.//a[@class="medium"]/i/text()').extract_first()
-            a['time_left'] = tl.xpath('.//text()').extract_first()
+            title_and_href = auction.xpath('.//a[@class="big"]')
+            a['title'] = title_and_href.xpath('.//text()').extract_first()
+            a['href'] = title_and_href.xpath('.//@href').extract_first()[1:]
+            a['price'] = auction.xpath('.//p[@class="lj b"]/text()').extract_first()
+            a['bids'] = auction.xpath('.//a[@class="medium"]/i/text()').extract_first()
+            a['time_left'] = auction.xpath(
+                './/td[@class="txt-dir"]/a[@class="medium"]/text()').extract_first()
             request = scrapy.Request(
                 self.base_url + a['href'],
                 callback=self.parse_auction,
@@ -94,7 +94,7 @@ class AuctionSpider(scrapy.Spider):
     def parse(self, response):
         nex_page_href, n_pages = self._find_number_of_pages(response)
 
-        for i in range(1, 5):
+        for i in range(1, n_pages):
             link = self.base_url + nex_page_href + str(i)
 
             yield scrapy.Request(
