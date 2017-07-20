@@ -25,10 +25,11 @@ class ExcelWriter(object):
         self.ws.cell(row=1, column=5, value='Expansion')
         self.ws.cell(row=1, column=6, value='Quantity')
         self.ws.cell(row=1, column=7, value='Time Left')
-        self.ws.cell(row=1, column=8, value='Link')
-        self.ws.cell(row=1, column=9, value='Extra')
-        self.ws.cell(row=1, column=10, value='Bids')
-        self.ws.cell(row=1, column=11, value='Title')
+        self.ws.cell(row=1, column=8, value='Condition')
+        self.ws.cell(row=1, column=9, value='Link')
+        self.ws.cell(row=1, column=10, value='Extra')
+        self.ws.cell(row=1, column=11, value='Bids')
+        self.ws.cell(row=1, column=12, value='Title')
 
     def close_spider(self, spider):
         self.update_width()
@@ -73,15 +74,16 @@ class ExcelWriter(object):
         row[4].value = exp_str
         row[5].value = str(item['quantity'])
         row[6].value = str(item['time_left'])
-        row[7].value = str(item['href'])
+        row[7].value = str(item['condition'])
+        row[8].value = str(item['href'])
         try:
-            row[8].value = str(item['extra'])
+            row[9].value = str(item['extra'])
         except KeyError as e:
             # There is no extra information
             pass
-        row[9].value = str(item['bids'])
+        row[10].value = str(item['bids'])
 
-        row[10].value = str(item['title'])
+        row[11].value = str(item['title'])
 
     def process_item(self, item, spider):
         self.write_to_workbook(item)

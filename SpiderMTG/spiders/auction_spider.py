@@ -80,7 +80,7 @@ class AuctionSpider(scrapy.Spider):
             a = Auction()
             title_and_href = auction.xpath('.//a[@class="big"]')
             a['title'] = title_and_href.xpath('.//text()').extract_first()
-            a['href'] = title_and_href.xpath('.//@href').extract_first()[1:]
+            a['href'] = self.base_url + title_and_href.xpath('.//@href').extract_first()[1:]
             a['price'] = auction.xpath('.//p[@class="lj b"]/text()').extract_first()
             a['bids'] = auction.xpath('.//a[@class="medium"]/i/text()').extract_first()
             time_left = auction.xpath('.//td[@class="txt-dir"]/a[@class="medium"]')
@@ -91,7 +91,7 @@ class AuctionSpider(scrapy.Spider):
 
             a['time_left'] = t
             request = scrapy.Request(
-                self.base_url + a['href'],
+                a['href'],
                 callback=self.parse_auction,
                 meta={'auction': a}
             )
