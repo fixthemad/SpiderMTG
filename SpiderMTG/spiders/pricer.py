@@ -1,5 +1,7 @@
 import scrapy
 from SpiderMTG.items import Card
+import urllib.parse
+from scrapy.http import response
 
 def read_list_from_file(file_name):
     cards = []
@@ -22,10 +24,13 @@ def read_list_from_file(file_name):
 
 class PricerSpider(scrapy.Spider):
     name = "pricer"
-    base_url = 'http://www.mtgbrasil.com.br/index.php?route=product/search&search='
+    base_url = 'https://www.mtgbrasil.com.br/index.php?route=product/search&search='
     start_urls = [
-        'http://www.mtgbrasil.com.br/',
+        'https://www.mtgbrasil.com.br/',
     ]
+
+    def search_url(self, card):
+        return self.base_url + card.lower()
 
     def search_card(self, response):
         card_list = []
@@ -38,17 +43,35 @@ class PricerSpider(scrapy.Spider):
 
         for name, price in zip(names, prices):
             card = Card()
-            names = name.extract().strip().split("/")
+            trimmed_name = name.extract().strip()
+
+            # @TODO: Put both eng name and pt name in card
+            if '/' in trimmed_name:
+                split_name = trimmed_name.split("/")
+                # Special cases like split cards
+                if len(split_name) > 2:
+                    trimmed_name = split_name[3].strip()
+                else:
+                    trimmed_name = split_name[1].strip()
+            else:
+                card['name'] = trimmed_name.strip()
+
 
             # @TODO: check if name matches the card being searched
 
             split_price = price.extract().strip().split("\n")
+
             price = split_price[0]
-            quantity = split_price[1].split('(')[1].strip(')')
+            quantity = split_price[1]
+            # Get only the quantity number
+            quantity_n = quantity[quantity.index('(')+1:quantity.index(')')]
 
             card['price'] = price
-            card['quantity'] = quantity
+            card['quantity'] = quantity_n
 
+            card_list.append(card)
+
+        return card_list
 
     def parse(self, response):
         if self.list_from:
@@ -56,10 +79,9 @@ class PricerSpider(scrapy.Spider):
 
             for card in cards:
                 yield scrapy.Request(
-                    url=self.base_url + card,
+                    url=self.search_url(card),
                     callback=self.search_card,
                 )
-
 
         else:
             print("Error, no list to read from")
