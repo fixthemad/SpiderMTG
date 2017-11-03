@@ -20,3 +20,9 @@ class Auction(scrapy.Item):
     href = scrapy.Field()
     bids = scrapy.Field()
     time_left = scrapy.Field()
+
+
+class Card(scrapy.Item):
+    name = scrapy.Field()
+    price = scrapy.Field()
+    quantity = scrapy.Field()

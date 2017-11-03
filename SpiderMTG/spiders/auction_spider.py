@@ -65,7 +65,7 @@ class AuctionSpider(scrapy.Spider):
 
         return auction
 
-    def parse_page(self, response):
+    def parse_auction_page(self, response):
         tables = response.xpath('//div[@class="boxshadow conteudo box-interna"]')
 
         if len(tables) == 3:
@@ -91,7 +91,7 @@ class AuctionSpider(scrapy.Spider):
 
             a['time_left'] = t
             request = scrapy.Request(
-                a['href'],
+                url=a['href'],
                 callback=self.parse_auction,
                 meta={'auction': a}
             )
@@ -99,13 +99,13 @@ class AuctionSpider(scrapy.Spider):
             yield request
 
     def parse(self, response):
-        nex_page_href, n_pages = self._find_number_of_pages(response)
+        next_page_href, n_pages = self._find_number_of_pages(response)
 
         for i in range(1, 2):
-            link = self.base_url + nex_page_href + str(i)
+            link = self.base_url + next_page_href + str(i)
 
             yield scrapy.Request(
                 url=link,
-                callback=self.parse_page,
+                callback=self.parse_auction_page,
             )
 
