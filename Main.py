@@ -7,13 +7,8 @@ import os
 
 
 def main():
-    process = CrawlerProcess({
-        'USER_AGENT': 'Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 5.1)'
-    })
-
-    settings = get_project_settings()
-
-    process.crawl(PricerSpider(settings), list_from="Zurgo.txt")
+    process = CrawlerProcess(get_project_settings())
+    process.crawl(PricerSpider(), list_from="Zurgo.txt", search_where="mtgbr", save_to="go.xlsx")
     # process.crawl(AuctionSpider(settings))
     process.start()
 

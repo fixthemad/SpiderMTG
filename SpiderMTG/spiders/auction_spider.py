@@ -34,6 +34,7 @@ class AuctionSpider(scrapy.Spider):
 
         if length < 6:
             pass
+            # @TODO: Inform that it's not a card, it's a product
             # The card is a product
         else:
             n = length % 6

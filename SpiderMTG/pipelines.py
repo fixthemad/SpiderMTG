@@ -10,7 +10,7 @@ from openpyxl import Workbook
 from SpiderMTG.items import Auction
 
 
-class ExcelWriter(object):
+class AuctionWriter(object):
 
     def __init__(self):
         self.wb = Workbook()
@@ -89,3 +89,50 @@ class ExcelWriter(object):
         self.write_to_workbook(item)
 
         return item
+
+
+class CardPricerWriter(object):
+    def __init__(self):
+        self.wb = Workbook()
+        self.ws = self.wb.active
+        self.width_adjust = 1.2
+
+    def open_spider(self, spider):
+        self.ws.cell(row=1, column=1, value='Card PT')
+        self.ws.cell(row=1, column=2, value='Card ENG')
+        self.ws.cell(row=1, column=3, value='Price')
+        self.ws.cell(row=1, column=4, value='Quantity')
+
+    def close_spider(self, spider):
+        self.update_width()
+        try:
+            self.wb.save(spider.save_to)
+
+        except AttributeError as e:
+            logging.error(e)
+
+        except Exception as e:
+            logging.error("Error saving workbook")
+            logging.error(e)
+
+    def update_width(self):
+        for column_cells in self.ws.columns:
+            length = max(len(str(cell.value)) for cell in column_cells) * self.width_adjust
+            self.ws.column_dimensions[column_cells[0].column].width = length
+
+    def process_item(self, item, spider):
+        self.write_to_workbook(item)
+
+        return item
+
+    def write_to_workbook(self, card):
+        row = self.ws[self.ws.max_row + 1]
+
+        name = card['name']
+        card_pt = name[0]
+        card_eng = name[1]
+
+        row[0].value = card_pt
+        row[1].value = card_eng
+        row[2].value = str(card['price'])
+        row[3].value = str(card['quantity'])

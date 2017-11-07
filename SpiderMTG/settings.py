@@ -65,7 +65,7 @@ COOKIES_ENABLED = False
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-    'SpiderMTG.pipelines.ExcelWriter': 101
+    'SpiderMTG.pipelines.CardPricerWriter': 101
 }
 
 FILES_STORE = "../"
